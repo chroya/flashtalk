@@ -1,0 +1,49 @@
+speech-command-system/
+├── clients/                     # 各种客户端实现
+│   ├── web/                    # Web客户端
+│   ├── desktop/                # 桌面客户端
+│   └── embedded/               # 嵌入式客户端
+│
+└── server/                     # 后端微服务
+    ├── common/                 # 公共模块
+    │   ├── src/main/java/
+    │   │   └── com/speech/common/
+    │   │       ├── proto/     # Protobuf定义
+    │   │       └── model/     # 共享数据模型
+    │   └── pom.xml
+    │
+    ├── stream-service/         # 音频流处理服务
+    │   ├── src/main/java/
+    │   │   └── com/speech/stream/
+    │   │       ├── config/    # 配置类
+    │   │       ├── rtp/       # RTP服务器实现
+    │   │       ├── opus/      # Opus编解码
+    │   │       └── service/   # 业务逻辑
+    │   └── pom.xml
+    │
+    ├── asr-service/           # 语音识别服务
+    │   ├── src/main/java/
+    │   │   └── com/speech/asr/
+    │   │       ├── config/
+    │   │       ├── whisper/   # Whisper模型集成
+    │   │       └── service/
+    │   └── pom.xml
+    │
+    ├── nlp-service/           # 自然语言处理服务
+    │   ├── src/main/java/
+    │   │   └── com/speech/nlp/
+    │   │       ├── intent/    # 意图识别
+    │   │       └── service/
+    │   └── pom.xml
+    │
+    ├── command-service/       # 指令处理服务
+    │   ├── src/main/java/
+    │   │   └── com/speech/command/
+    │   │       ├── executor/  # 指令执行器
+    │   │       └── handler/   # 指令处理器
+    │   └── pom.xml
+    │
+    ├── docker/               # Docker配置
+    │   └── services/        # 服务Dockerfile
+    │
+    └── pom.xml              # 父POM文件 

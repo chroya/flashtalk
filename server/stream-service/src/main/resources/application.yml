@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: stream-service
+
+server:
+  port: 8080
+
+# RTP服务器配置
+rtp:
+  port: 5004
+  buffer-size: 2048
+
+# gRPC服务器配置
+grpc:
+  server:
+    port: 50051
+
+# ASR服务配置
+asr:
+  service:
+    host: localhost
+    port: 50052
+
+# 音频处理配置
+audio:
+  # Opus解码配置
+  opus:
+    sample-rate: 16000
+    channels: 1
+    frame-size: 480  # 10ms at 48kHz
+  # 音频缓冲配置
+  buffer:
+    max-size: 100
+    timeout: 1000  # ms 

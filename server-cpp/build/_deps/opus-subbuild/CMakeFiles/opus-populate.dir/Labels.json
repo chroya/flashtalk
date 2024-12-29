@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/Users/nekliu/Documents/gitwork/FlashTalk/server/build/_deps/opus-subbuild/CMakeFiles/opus-populate"
+		},
+		{
+			"file" : "/Users/nekliu/Documents/gitwork/FlashTalk/server/build/_deps/opus-subbuild/CMakeFiles/opus-populate.rule"
+		},
+		{
+			"file" : "/Users/nekliu/Documents/gitwork/FlashTalk/server/build/_deps/opus-subbuild/CMakeFiles/opus-populate-complete.rule"
+		},
+		{
+			"file" : "/Users/nekliu/Documents/gitwork/FlashTalk/server/build/_deps/opus-subbuild/opus-populate-prefix/src/opus-populate-stamp/opus-populate-build.rule"
+		},
+		{
+			"file" : "/Users/nekliu/Documents/gitwork/FlashTalk/server/build/_deps/opus-subbuild/opus-populate-prefix/src/opus-populate-stamp/opus-populate-configure.rule"
+		},
+		{
+			"file" : "/Users/nekliu/Documents/gitwork/FlashTalk/server/build/_deps/opus-subbuild/opus-populate-prefix/src/opus-populate-stamp/opus-populate-download.rule"
+		},
+		{
+			"file" : "/Users/nekliu/Documents/gitwork/FlashTalk/server/build/_deps/opus-subbuild/opus-populate-prefix/src/opus-populate-stamp/opus-populate-install.rule"
+		},
+		{
+			"file" : "/Users/nekliu/Documents/gitwork/FlashTalk/server/build/_deps/opus-subbuild/opus-populate-prefix/src/opus-populate-stamp/opus-populate-mkdir.rule"
+		},
+		{
+			"file" : "/Users/nekliu/Documents/gitwork/FlashTalk/server/build/_deps/opus-subbuild/opus-populate-prefix/src/opus-populate-stamp/opus-populate-patch.rule"
+		},
+		{
+			"file" : "/Users/nekliu/Documents/gitwork/FlashTalk/server/build/_deps/opus-subbuild/opus-populate-prefix/src/opus-populate-stamp/opus-populate-test.rule"
+		},
+		{
+			"file" : "/Users/nekliu/Documents/gitwork/FlashTalk/server/build/_deps/opus-subbuild/opus-populate-prefix/src/opus-populate-stamp/opus-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"opus-populate"
+		],
+		"name" : "opus-populate"
+	}
+}

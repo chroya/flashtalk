@@ -1,0 +1,3 @@
+/Users/nekliu/Documents/gitwork/FlashTalk/server/stream-service/src/main/cpp/build/CMakeFiles/opus_jni.dir
+/Users/nekliu/Documents/gitwork/FlashTalk/server/stream-service/src/main/cpp/build/CMakeFiles/edit_cache.dir
+/Users/nekliu/Documents/gitwork/FlashTalk/server/stream-service/src/main/cpp/build/CMakeFiles/rebuild_cache.dir
