@@ -16,11 +16,11 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>common</module>
+        <!-- <module>common</module> -->
         <module>stream-service</module>
-        <module>asr-service</module>
+        <!-- <module>asr-service</module>
         <module>nlp-service</module>
-        <module>command-service</module>
+        <module>command-service</module> -->
     </modules>
 
     <properties>

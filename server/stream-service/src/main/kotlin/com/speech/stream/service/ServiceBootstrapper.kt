@@ -1,6 +1,7 @@
 package com.speech.stream.service
 
 import com.speech.stream.rtp.RtpServer
+import com.speech.stream.grpc.GrpcServer
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.event.ApplicationReadyEvent

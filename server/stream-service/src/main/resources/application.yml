@@ -25,10 +25,15 @@ asr:
 audio:
   # Opus解码配置
   opus:
-    sample-rate: 16000
+    sample-rate: 48000
     channels: 1
     frame-size: 480  # 10ms at 48kHz
   # 音频缓冲配置
   buffer:
     max-size: 100
     timeout: 1000  # ms 
+
+# WebSocket配置
+websocket:
+  max-text-message-size: 8192
+  max-binary-message-size: 65536 

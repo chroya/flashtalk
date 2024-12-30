@@ -1,124 +1,214 @@
-class AudioStreamer {
+class AudioRecorder {
     constructor() {
-        this.recorder = null;
-        this.socket = null;
-        this.sequence = 0;
+        this.ws = null;
+        this.mediaRecorder = null;
+        this.audioContext = null;
+        this.analyser = null;
+        this.dataArray = null;
+        this.isRecording = false;
+
+        // DOM元素
+        this.startButton = document.getElementById('startButton');
+        this.stopButton = document.getElementById('stopButton');
+        this.statusDiv = document.getElementById('status');
+        this.audioLevelBar = document.getElementById('audioLevelBar');
+
+        // 检查浏览器支持
+        this.checkBrowserSupport();
+
+        // 绑定事件处理器
+        this.startButton.onclick = () => this.initAudioAndStart();
+        this.stopButton.onclick = () => this.stopRecording();
+
+        // 初始化WebSocket
+        this.initWebSocket();
     }
 
-    async init() {
+    checkBrowserSupport() {
+        // 检查必要的API是否可用
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            this.showError('您的浏览器不支持音频录制。请使用最新版本的Chrome、Firefox或Safari。');
+            this.startButton.disabled = true;
+            return false;
+        }
+
+        // 检查MediaRecorder API
+        if (typeof MediaRecorder === 'undefined') {
+            this.showError('您的浏览器不支持MediaRecorder API。请使用最新版本的Chrome、Firefox或Safari。');
+            this.startButton.disabled = true;
+            return false;
+        }
+
+        // 检查WebSocket支持
+        if (!window.WebSocket) {
+            this.showError('您的浏览器不支持WebSocket。请使用最新版本的浏览器。');
+            this.startButton.disabled = true;
+            return false;
+        }
+
+        return true;
+    }
+
+    showError(message) {
+        this.statusDiv.textContent = message;
+        this.statusDiv.className = 'disconnected';
+        console.error(message);
+    }
+
+    initWebSocket() {
         try {
-            // 配置Opus录音机
-            this.recorder = new Recorder({
-                encoderPath: "https://cdn.jsdelivr.net/npm/opus-recorder@8.0.5/dist/encoderWorker.min.js",
-                encoderApplication: 2048,
-                streamPages: true,
-                numberOfChannels: 1,
-                encoderSampleRate: 16000,
-                originalSampleRate: 16000
+            this.ws = new WebSocket('ws://localhost:8080/audio');
+            
+            this.ws.onopen = () => {
+                this.statusDiv.textContent = '已连接到服务器';
+                this.statusDiv.className = 'connected';
+                this.startButton.disabled = false;
+            };
+            
+            this.ws.onclose = () => {
+                this.statusDiv.textContent = '与服务器断开连接';
+                this.statusDiv.className = 'disconnected';
+                this.startButton.disabled = true;
+                this.stopButton.disabled = true;
+                
+                // 5秒后尝试重连
+                setTimeout(() => this.initWebSocket(), 5000);
+            };
+            
+            this.ws.onerror = (error) => {
+                console.error('WebSocket错误:', error);
+                this.showError('WebSocket连接错误');
+            };
+        } catch (error) {
+            this.showError('WebSocket初始化失败: ' + error.message);
+        }
+    }
+
+    async initAudioAndStart() {
+        if (!this.checkBrowserSupport()) return;
+
+        try {
+            // 首先请求音频权限
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    channelCount: 1,
+                    sampleRate: 48000,
+                    echoCancellation: true,
+                    noiseSuppression: true
+                }
             });
 
-            // 处理音频数据
-            this.recorder.ondataavailable = (typedArray) => {
-                if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-                    // 创建RTP包
-                    const rtpPacket = this.createRTPPacket(typedArray);
-                    this.socket.send(rtpPacket);
+            // 在用户交互后初始化AudioContext
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.audioContext = new AudioContext();
+
+            // 设置音频处理管道
+            await this.setupAudioPipeline(stream);
+
+            // 开始录音
+            this.startRecording(stream);
+        } catch (error) {
+            this.showError('初始化音频失败: ' + error.message);
+        }
+    }
+
+    async setupAudioPipeline(stream) {
+        // 创建音频源
+        const source = this.audioContext.createMediaStreamSource(stream);
+        
+        // 创建分析器
+        this.analyser = this.audioContext.createAnalyser();
+        this.analyser.fftSize = 256;
+        
+        // 连接节点
+        source.connect(this.analyser);
+        
+        // 创建数据数组
+        this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+    }
+
+    startRecording(stream) {
+        try {
+            // 创建MediaRecorder
+            const options = {
+                mimeType: 'audio/webm;codecs=opus'
+            };
+
+            this.mediaRecorder = new MediaRecorder(stream, options);
+
+            this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0 && this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(event.data);
                 }
             };
 
-            await this.connectWebSocket();
-            this.updateStatus('已就绪');
+            // 开始录音
+            this.mediaRecorder.start(100); // 每100ms发送一次数据
+            this.isRecording = true;
+            
+            // 更新UI
+            this.startButton.disabled = true;
+            this.stopButton.disabled = false;
+            this.statusDiv.textContent = '正在录音...';
+            
+            // 开始音量可视化
+            this.visualize();
         } catch (error) {
-            this.updateStatus('初始化失败: ' + error.message, true);
+            this.showError('启动录音失败: ' + error.message);
         }
     }
 
-    async connectWebSocket() {
-        return new Promise((resolve, reject) => {
-            this.socket = new WebSocket('ws://localhost:8080/audio');
+    stopRecording() {
+        if (this.mediaRecorder && this.isRecording) {
+            this.mediaRecorder.stop();
+            this.isRecording = false;
             
-            this.socket.onopen = () => {
-                this.updateStatus('WebSocket已连接');
-                resolve();
-            };
+            // 停止所有音轨
+            this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
             
-            this.socket.onerror = (error) => {
-                this.updateStatus('WebSocket错误: ' + error.message, true);
-                reject(error);
-            };
+            // 关闭音频上下文
+            if (this.audioContext) {
+                this.audioContext.close();
+                this.audioContext = null;
+            }
             
-            this.socket.onclose = () => {
-                this.updateStatus('WebSocket已断开');
-            };
-            
-            this.socket.onmessage = (event) => {
-                const response = JSON.parse(event.data);
-                this.updateStatus('收到响应: ' + response.message);
-            };
-        });
-    }
-
-    createRTPPacket(opusData) {
-        // RTP头部 (12字节)
-        const buffer = new ArrayBuffer(12 + opusData.length);
-        const view = new DataView(buffer);
-        
-        // 1. 版本(2位)=2, 填充(1位)=0, 扩展(1位)=0, CSRC计数(4位)=0
-        view.setUint8(0, 0x80);
-        
-        // 2. 标记(1位)=0, 负载类型(7位)=111(Opus)
-        view.setUint8(1, 111);
-        
-        // 3-4. 序列号(16位)
-        view.setUint16(2, this.sequence++);
-        
-        // 5-8. 时间戳(32位)
-        view.setUint32(4, Date.now());
-        
-        // 9-12. SSRC(32位)
-        view.setUint32(8, 0x12345678);
-        
-        // 添加Opus数据
-        new Uint8Array(buffer, 12).set(opusData);
-        
-        return buffer;
-    }
-
-    async start() {
-        try {
-            await this.recorder.start();
-            this.updateStatus('录音已开始');
-            document.getElementById('startButton').disabled = true;
-            document.getElementById('stopButton').disabled = false;
-        } catch (error) {
-            this.updateStatus('启动录音失败: ' + error.message, true);
+            // 更新UI
+            this.startButton.disabled = false;
+            this.stopButton.disabled = true;
+            this.statusDiv.textContent = '已停止录音';
+            this.audioLevelBar.style.width = '0%';
         }
     }
 
-    async stop() {
-        try {
-            await this.recorder.stop();
-            this.updateStatus('录音已停止');
-            document.getElementById('startButton').disabled = false;
-            document.getElementById('stopButton').disabled = true;
-        } catch (error) {
-            this.updateStatus('停止录音失败: ' + error.message, true);
-        }
-    }
+    visualize() {
+        if (!this.isRecording || !this.analyser || !this.dataArray) return;
 
-    updateStatus(message, isError = false) {
-        const statusDiv = document.getElementById('status');
-        statusDiv.textContent = message;
-        statusDiv.className = 'status ' + (isError ? 'error' : 'success');
+        this.analyser.getByteFrequencyData(this.dataArray);
+        const average = this.dataArray.reduce((a, b) => a + b) / this.dataArray.length;
+        const volume = (average / 255) * 100;
+        this.audioLevelBar.style.width = volume + '%';
+
+        requestAnimationFrame(() => this.visualize());
     }
 }
 
-// 初始化应用
-const streamer = new AudioStreamer();
-
+// 等待用户交互后再创建AudioRecorder实例
 document.addEventListener('DOMContentLoaded', () => {
-    streamer.init();
+    const startButton = document.getElementById('startButton');
+    const statusDiv = document.getElementById('status');
     
-    document.getElementById('startButton').onclick = () => streamer.start();
-    document.getElementById('stopButton').onclick = () => streamer.stop();
+    // 初始状态
+    startButton.disabled = true;
+    statusDiv.textContent = '点击"开始录音"按钮开始';
+    
+    // 用户点击开始按钮时才创建AudioRecorder实例
+    startButton.onclick = () => {
+        startButton.onclick = null; // 移除这个临时的点击处理器
+        const recorder = new AudioRecorder();
+        // 立即触发录音开始
+        recorder.initAudioAndStart();
+    };
+    
+    // 启用开始按钮
+    startButton.disabled = false;
 }); 
